@@ -31,6 +31,7 @@ export default function ItemList({
   hasBottomNav = false
 }: ItemListProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -40,6 +41,13 @@ export default function ItemList({
   const [sortBy, setSortBy] = useState<'time' | 'category' | 'tag'>('time');
   const settingsRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,7 +63,7 @@ export default function ItemList({
   }, []);
 
   const filteredItems = useMemo(() => {
-    const query = searchQuery.toLowerCase();
+    const query = debouncedQuery.toLowerCase();
     if (!query) return items;
     return items.filter(
       (item) =>
@@ -65,7 +73,7 @@ export default function ItemList({
         (item.platform || '').toLowerCase().includes(query) ||
         (item.notes || '').toLowerCase().includes(query)
     );
-  }, [items, searchQuery]);
+  }, [items, debouncedQuery]);
 
   const sortedItems = useMemo(() => {
     const sorted = [...filteredItems];
@@ -145,7 +153,7 @@ export default function ItemList({
   return (
     <div className="flex flex-col h-full bg-stone-100 relative pt-safe">
       {/* Top App Bar */}
-      <header className="bg-stone-100/80 backdrop-blur-md text-stone-900 px-4 py-3 sticky top-0 z-20 border-b border-stone-200/50">
+      <header className="bg-stone-100/80 backdrop-blur-md text-stone-900 px-4 py-3 sticky top-0 z-20 border-b border-stone-200/50 pt-[env(safe-area-inset-top,20px)]">
         {isSelectionMode ? (
           <div className="flex items-center justify-between h-10">
             <div className="flex items-center gap-3">
@@ -257,7 +265,7 @@ export default function ItemList({
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
                         >
                           <Sparkles size={18} className="text-stone-400" />
-                          关于 (About)
+                          关于
                         </button>
                       </motion.div>
                     )}
@@ -270,31 +278,17 @@ export default function ItemList({
 
         {/* Search Bar */}
         {!isSelectionMode && (
-          <div className="mt-1">
-            <motion.div 
-              initial={{ opacity: 0, y: 50, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{
-                delay: 0,
-                type: "spring",
-                stiffness: 150,
-                damping: 15,
-                mass: 1
-              }}
-              style={{ willChange: "transform, opacity" }}
-              className="relative w-full transform-gpu"
-            >
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Search size={18} className="text-stone-400" />
-              </div>
-              <input
-                type="text"
-                placeholder=""
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 focus:ring-2 focus:ring-emerald-500 transition-all text-sm text-stone-800"
-              />
-            </motion.div>
+          <div className="mt-1 relative w-full">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <Search size={18} className="text-stone-400" />
+            </div>
+            <input
+              type="text"
+              placeholder=""
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 focus:ring-2 focus:ring-emerald-500 transition-all text-sm text-stone-800"
+            />
           </div>
         )}
       </header>
@@ -450,12 +444,12 @@ export default function ItemList({
             >
               <div className="flex flex-col items-center mb-6">
                 <h2 className="text-3xl font-bold tracking-tight text-stone-800 mb-2 font-sans">Stockpile</h2>
-                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium tracking-wider">v1.0</span>
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium tracking-wider">v1.1</span>
               </div>
               
               <div className="space-y-4 text-sm text-stone-600 leading-relaxed overflow-y-auto max-h-[60vh] px-1">
                 <p>
-                  这是一个为了拯救“买时爽歪歪，找时抓脑袋”而诞生的 App。代码是由 Gemini 熬夜写的，Bug 是由开发者亲手调教的。
+                  这是一个为了拯救“买时爽歪歪，找时抓脑袋”而诞生的 App。代码是由 Gemini 熬夜写的，Bug 是由veilsoar亲手调教的。
                 </p>
                 
                 <div className="space-y-3 mt-4">
@@ -479,7 +473,7 @@ export default function ItemList({
                 <div className="bg-stone-50/80 p-4 rounded-2xl border border-stone-100/50 mt-4">
                   <h4 className="font-bold text-stone-800 mb-1">温馨提示：</h4>
                   <p className="text-xs text-stone-500">
-                    1.0 版正式出道，虽然它现在还没法帮你自动补货，但它已经学会了帮你盯着钱包的每一个子儿。如果它偶尔闹小脾气（崩溃），请重启并给它一个爱的抱抱。
+                    1.1 版正式出道，虽然它现在还没法帮你自动补货，但它已经学会了帮你盯着钱包的每一个子儿。如果它偶尔闹小脾气（崩溃），请重启并给它一个爱的抱抱。
                   </p>
                 </div>
               </div>
@@ -493,7 +487,7 @@ export default function ItemList({
 
               <div className="mt-6 text-center">
                 <p className="text-[10px] text-stone-400 font-medium tracking-wider uppercase">
-                  Made with ❤️ by Gemini
+                  Made with ❤️ by veilsoar
                 </p>
               </div>
             </motion.div>

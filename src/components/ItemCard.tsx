@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { StockpileItem } from '../types';
 import { Image as ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -26,8 +26,9 @@ export const calculateDailyCost = (price: number, purchaseDate: number): number 
   return price / daysOwned;
 };
 
-export default function ItemCard({ item, index, isSelected, isSelectionMode, onClick, onLongPress, onTagClick }: ItemCardProps) {
+export default React.memo(function ItemCard({ item, index, isSelected, isSelectionMode, onClick, onLongPress, onTagClick }: ItemCardProps) {
   const dailyCost = useMemo(() => calculateDailyCost(item.price, item.purchaseDate), [item.price, item.purchaseDate]);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   
   // Expiry Logic
   const { cardBg, borderColor, expiryText } = useMemo(() => {
@@ -59,16 +60,16 @@ export default function ItemCard({ item, index, isSelected, isSelectionMode, onC
   
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 50, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
       transition={{
         delay: index * 0.025,
         type: "spring",
-        stiffness: 150,
-        damping: 15,
-        mass: 1
+        stiffness: 250,
+        damping: 20,
+        mass: 1,
+        duration: 0.2
       }}
       style={{ willChange: "transform, opacity" }}
       className={`relative ${cardBg} backdrop-blur-md rounded-2xl p-2.5 shadow-sm border transition-all cursor-pointer flex flex-row items-center transform-gpu ${
@@ -80,10 +81,14 @@ export default function ItemCard({ item, index, isSelected, isSelectionMode, onC
         onLongPress();
       }}
       onTouchStart={() => {
-        window.longPressTimer = setTimeout(() => onLongPress(), 500);
+        longPressTimer.current = setTimeout(() => onLongPress(), 500);
       }}
-      onTouchEnd={() => clearTimeout(window.longPressTimer)}
-      onTouchMove={() => clearTimeout(window.longPressTimer)}
+      onTouchEnd={() => {
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      }}
+      onTouchMove={() => {
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      }}
     >
       {/* Thumbnail (60x60) */}
       <div className="w-[60px] h-[60px] bg-stone-100 rounded-xl relative shrink-0 overflow-hidden">
@@ -146,4 +151,4 @@ export default function ItemCard({ item, index, isSelected, isSelectionMode, onC
       </div>
     </motion.div>
   );
-}
+})

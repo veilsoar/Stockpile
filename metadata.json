@@ -1,5 +1,7 @@
 {
-  "name": "Stockpile Tracker",
+  "name": "Stockpile",
   "description": "A personal stockpile management tool with local storage, image capture, and CSV export.",
-  "requestFramePermissions": ["camera"]
+  "requestFramePermissions": [
+    "camera"
+  ]
 }
