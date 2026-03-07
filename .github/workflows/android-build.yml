@@ -1,0 +1,42 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ] # 当你推送到 main 分支时自动触发
+  workflow_dispatch: # 允许你手动点击按钮触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Setup Java (Android 需要)
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Install Dependencies & Build Web
+      run: |
+        npm install
+        npm run build
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Build APK
+      working-directory: ./android
+      run: ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: stockpile-app-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
