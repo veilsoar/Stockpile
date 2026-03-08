@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { StockpileItem } from './types';
 import { getAllItems, saveItem, deleteItems, saveItems } from './store';
-import { exportToJSON, exportToExcel, importFromCSV } from './utils/export';
+import { exportToJSON, exportToExcel, importFromJSON } from './utils/export';
 import ItemList from './components/ItemList';
 import ItemForm from './components/ItemForm';
 import CategoryList from './components/CategoryList';
@@ -15,8 +15,19 @@ export default function App() {
   const [tab, setTab] = useState<'overview' | 'categories'>('overview');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<StockpileItem | undefined>(undefined);
+  const [defaultCategory, setDefaultCategory] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
+  const [customBg, setCustomBg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const updateBg = () => {
+      setCustomBg(localStorage.getItem('app_custom_bg'));
+    };
+    updateBg();
+    window.addEventListener('storage', updateBg);
+    return () => window.removeEventListener('storage', updateBg);
+  }, []);
 
   useEffect(() => {
     loadItems();
@@ -55,7 +66,8 @@ export default function App() {
     return items.filter(i => (i.category || '未分类') === selectedCategory);
   }, [items, selectedCategory]);
 
-  const handleAdd = () => {
+  const handleAdd = (category?: string) => {
+    setDefaultCategory(category);
     setEditingItem(undefined);
     setCurrentView('form');
   };
@@ -105,13 +117,23 @@ export default function App() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    if (!window.confirm('确定要将导入的备份数据与当前记录合并吗？(This will merge data with current records)')) {
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const importedItems = await importFromCSV(file);
-      if (importedItems.length > 0) {
-        await saveItems(importedItems);
+      const importedItems = await importFromJSON(file);
+      if (Array.isArray(importedItems)) {
+        // Merge logic: Combine current items with imported items
+        const mergedItems = [...items, ...importedItems];
+        // Remove duplicates based on ID if necessary (assuming items have unique IDs)
+        const uniqueItems = Array.from(new Map(mergedItems.map(item => [item.id, item])).values());
+        
+        await saveItems(uniqueItems);
         await loadItems();
-        alert(`成功导入 ${importedItems.length} 条数据！`);
+        alert(`成功合并 ${importedItems.length} 条数据！(共 ${uniqueItems.length} 条)`);
       } else {
         alert('未能从文件中读取到有效数据。');
       }
@@ -133,16 +155,25 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-full max-w-md mx-auto bg-stone-100 shadow-2xl overflow-hidden relative font-sans flex flex-col">
+    <div 
+      className="h-screen w-full max-w-md mx-auto shadow-2xl overflow-hidden relative font-sans flex flex-col"
+      style={customBg ? {
+        backgroundImage: `url(${customBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      } : {}}
+    >
+      {!customBg && <div className="absolute inset-0 bg-stone-50 -z-10" />}
       <input
         type="file"
-        accept=".csv"
+        accept=".json"
         ref={fileInputRef}
         className="hidden"
         onChange={handleFileChange}
       />
       
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative bg-transparent">
         <AnimatePresence>
           {currentView === 'form' ? (
             <motion.div 
@@ -155,6 +186,7 @@ export default function App() {
             >
               <ItemForm
                 initialItem={editingItem}
+                defaultCategory={defaultCategory}
                 onSave={handleSave}
                 onCancel={() => setCurrentView('list')}
               />
@@ -170,7 +202,7 @@ export default function App() {
             >
               <ItemList
                 items={items}
-                onAdd={handleAdd}
+                onAdd={(cat) => handleAdd(cat)}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onExport={handleExport}
@@ -190,7 +222,7 @@ export default function App() {
             >
               <ItemList
                 items={filteredCategoryItems}
-                onAdd={handleAdd}
+                onAdd={(cat) => handleAdd(cat)}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onExport={handleExport}
@@ -221,24 +253,18 @@ export default function App() {
 
       {/* Bottom Navigation */}
       {currentView === 'list' && !selectedCategory && (
-        <nav className="bg-white/90 backdrop-blur-md border-t border-stone-200/50 px-6 py-2 pb-safe flex justify-around items-center z-30 relative">
+        <nav className="fixed bottom-6 left-0 right-0 w-max mx-auto bg-white/80 backdrop-blur-md border border-white/50 shadow-lg rounded-full px-10 py-3 flex gap-16 items-center z-50">
           <button 
             onClick={() => setTab('overview')} 
-            className={`flex flex-col items-center p-2 min-w-[64px] ${tab === 'overview' ? 'text-primary' : 'text-stone-500 hover:text-stone-700'}`}
+            className={`transition-colors ${tab === 'overview' ? 'text-[var(--color-primary)]' : 'text-gray-400 hover:text-stone-600'}`}
           >
-            <div className={`px-5 py-1 rounded-full transition-colors ${tab === 'overview' ? 'bg-primary/10' : ''}`}>
-              <LayoutDashboard size={24} strokeWidth={tab === 'overview' ? 2.5 : 2} />
-            </div>
-            <span className="text-[11px] font-medium mt-1">概览</span>
+            <LayoutDashboard size={28} strokeWidth={tab === 'overview' ? 2.5 : 2} />
           </button>
           <button 
             onClick={() => setTab('categories')} 
-            className={`flex flex-col items-center p-2 min-w-[64px] ${tab === 'categories' ? 'text-primary' : 'text-stone-500 hover:text-stone-700'}`}
+            className={`transition-colors ${tab === 'categories' ? 'text-[var(--color-primary)]' : 'text-gray-400 hover:text-stone-600'}`}
           >
-            <div className={`px-5 py-1 rounded-full transition-colors ${tab === 'categories' ? 'bg-primary/10' : ''}`}>
-              <Layers size={24} strokeWidth={tab === 'categories' ? 2.5 : 2} />
-            </div>
-            <span className="text-[11px] font-medium mt-1">分类</span>
+            <Layers size={28} strokeWidth={tab === 'categories' ? 2.5 : 2} />
           </button>
         </nav>
       )}

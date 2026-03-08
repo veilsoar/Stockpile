@@ -4,11 +4,12 @@ import { Camera, Image as ImageIcon, ArrowLeft, Save } from 'lucide-react';
 
 interface ItemFormProps {
   initialItem?: StockpileItem;
+  defaultCategory?: string;
   onSave: (item: StockpileItem) => void;
   onCancel: () => void;
 }
 
-export default function ItemForm({ initialItem, onSave, onCancel }: ItemFormProps) {
+export default function ItemForm({ initialItem, defaultCategory, onSave, onCancel }: ItemFormProps) {
   useEffect(() => {
     const handlePopState = () => {
       onCancel();
@@ -37,6 +38,12 @@ export default function ItemForm({ initialItem, onSave, onCancel }: ItemFormProp
       : ''
   );
   const [tagsString, setTagsString] = useState(initialItem?.tags?.join(', ') || '');
+
+  useEffect(() => {
+    if (!initialItem && defaultCategory) {
+      setCategory(defaultCategory);
+    }
+  }, [initialItem, defaultCategory]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -101,9 +108,9 @@ export default function ItemForm({ initialItem, onSave, onCancel }: ItemFormProp
   };
 
   return (
-    <div className="flex flex-col h-full bg-stone-50">
+    <div className="flex flex-col h-full bg-transparent">
       {/* Top App Bar */}
-      <header className="flex items-center justify-between px-4 py-3 bg-stone-100 text-stone-900 shadow-sm sticky top-0 z-10 pt-[env(safe-area-inset-top,24px)]">
+      <header className="flex items-center justify-between px-4 py-3 bg-transparent/80 backdrop-blur-md text-stone-900 shadow-sm sticky top-0 z-10 pt-[env(safe-area-inset-top,24px)]">
         <div className="flex items-center gap-3">
           <button onClick={onCancel} className="p-2 -ml-2 rounded-full hover:bg-stone-200 transition-colors">
             <ArrowLeft size={24} />

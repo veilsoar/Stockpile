@@ -6,11 +6,12 @@ import * as XLSX from 'xlsx';
 export async function exportToJSON(items: StockpileItem[]) {
   const fileName = `Stockpile_Full_Backup_${new Date().toISOString().split('T')[0]}_veilsoar.json`;
   const jsonContent = JSON.stringify(items, null, 2);
+  const base64Data = btoa(unescape(encodeURIComponent(jsonContent)));
 
   try {
     await Filesystem.writeFile({
       path: fileName,
-      data: jsonContent,
+      data: base64Data,
       directory: Directory.Cache,
     });
 
@@ -68,41 +69,27 @@ export async function exportToExcel(items: StockpileItem[]) {
   }
 }
 
-export async function importFromCSV(file: File): Promise<StockpileItem[]> {
+export async function importFromJSON(file: File): Promise<StockpileItem[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string;
-        const cleanText = text.replace(/^\uFEFF/, '');
-        const parsed = parseCSV(cleanText);
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch (e) {
+          // Try decoding base64 if JSON.parse fails
+          const decoded = decodeURIComponent(escape(atob(text)));
+          parsed = JSON.parse(decoded);
+        }
 
-        if (parsed.length < 2) {
-          resolve([]);
+        if (!Array.isArray(parsed)) {
+          reject(new Error('Invalid JSON format: Expected an array of items.'));
           return;
         }
 
-        const items: StockpileItem[] = [];
-
-        for (let i = 1; i < parsed.length; i++) {
-          const row = parsed[i];
-          if (row.length < 5) continue; // Skip empty or malformed rows
-
-          const item: StockpileItem = {
-            id: row[0] || crypto.randomUUID(),
-            name: row[1] || '未命名',
-            category: row[2] || '',
-            purchaseDate: parseInt(row[3]) || Date.now(),
-            price: parseFloat(row[4]) || 0,
-            platform: row[5] || '',
-            notes: row[6] || '',
-            expiryDate: row[7] ? parseInt(row[7]) : undefined,
-            tags: row[8] ? row[8].split(';').filter(Boolean) : [],
-            imageUri: row[9] || undefined
-          };
-          items.push(item);
-        }
-        resolve(items);
+        resolve(parsed as StockpileItem[]);
       } catch (err) {
         reject(err);
       }
@@ -110,23 +97,4 @@ export async function importFromCSV(file: File): Promise<StockpileItem[]> {
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsText(file);
   });
-}
-
-function parseCSV(str: string): string[][] {
-  const arr: string[][] = [];
-  let quote = false;
-  let row = 0, col = 0;
-  for (let c = 0; c < str.length; c++) {
-    let cc = str[c], nc = str[c + 1];
-    arr[row] = arr[row] || [];
-    arr[row][col] = arr[row][col] || '';
-    if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
-    if (cc == '"') { quote = !quote; continue; }
-    if (cc == ',' && !quote) { ++col; continue; }
-    if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
-    if (cc == '\n' && !quote) { ++row; col = 0; continue; }
-    if (cc == '\r' && !quote) { ++row; col = 0; continue; }
-    arr[row][col] += cc;
-  }
-  return arr;
 }

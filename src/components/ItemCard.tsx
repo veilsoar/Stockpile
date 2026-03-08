@@ -30,10 +30,11 @@ export default React.memo(function ItemCard({ item, index, isSelected, isSelecti
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   
   // Expiry Logic
-  const { cardBg, borderColor, expiryText } = useMemo(() => {
+  const { cardBg, borderColor, expiryText, isExpired } = useMemo(() => {
     let bg = 'bg-white/70';
     let border = 'border-white/40';
     let text = null;
+    let expired = false;
 
     if (item.expiryDate) {
       const now = new Date();
@@ -41,26 +42,28 @@ export default React.memo(function ItemCard({ item, index, isSelected, isSelecti
       const daysUntil = Math.ceil((item.expiryDate - todayStart) / (1000 * 60 * 60 * 24));
       
       if (daysUntil < 0) {
-        bg = 'bg-red-200/70';
-        border = 'border-red-400/50';
-        text = <span className="text-red-900 font-medium text-[10px]">已过期 {Math.abs(daysUntil)} 天</span>;
+        bg = 'bg-red-50';
+        border = 'border-red-200';
+        expired = true;
+        text = <span className="text-red-700 font-medium text-[10px]">已过期 {Math.abs(daysUntil)} 天</span>;
       } else if (daysUntil === 0) {
-        bg = 'bg-red-200/70';
-        border = 'border-red-400/50';
-        text = <span className="text-red-900 font-bold text-[10px]">今天到期</span>;
+        bg = 'bg-red-50';
+        border = 'border-red-200';
+        expired = true;
+        text = <span className="text-red-700 font-bold text-[10px]">今天到期</span>;
       } else if (daysUntil <= 30) {
         bg = 'bg-orange-50/70';
         border = 'border-orange-200/50';
         text = <span className="text-orange-600 font-medium text-[10px]">{daysUntil} 天后到期</span>;
       }
     }
-    return { cardBg: bg, borderColor: border, expiryText: text };
+    return { cardBg: bg, borderColor: border, expiryText: text, isExpired: expired };
   }, [item.expiryDate]);
   
   return (
     <div
-      className={`relative ${cardBg} backdrop-blur-md rounded-2xl p-2.5 shadow-sm border transition-all cursor-pointer flex flex-row items-center transform-gpu ${
-        isSelected ? 'border-primary bg-primary/10' : `${borderColor} hover:shadow-md`
+      className={`relative rounded-2xl p-2.5 shadow-sm transition-all cursor-pointer flex flex-row items-center transform-gpu ${
+        isSelected ? 'border-primary bg-primary/10' : `${cardBg} ${borderColor} hover:shadow-md`
       }`}
       onClick={onClick}
       onContextMenu={(e) => {
@@ -102,11 +105,11 @@ export default React.memo(function ItemCard({ item, index, isSelected, isSelecti
       {/* Content */}
       <div className="ml-3 flex-1 min-w-0 flex flex-col justify-center">
         <div className="flex justify-between items-start mb-0.5">
-          <h3 className="text-sm font-medium text-stone-800 truncate pr-2">{item.name}</h3>
-          <span className="text-sm font-bold text-stone-800 shrink-0">¥{item.price.toFixed(2)}</span>
+          <h3 className={`text-sm font-medium truncate pr-2 ${isExpired ? 'text-red-700' : 'text-stone-800'}`}>{item.name}</h3>
+          <span className={`text-sm font-bold shrink-0 ${isExpired ? 'text-red-700' : 'text-stone-800'}`}>¥{item.price.toFixed(2)}</span>
         </div>
         
-        <div className="flex items-center justify-between text-xs text-stone-500">
+        <div className={`flex items-center justify-between text-xs ${isExpired ? 'text-red-500' : 'text-stone-500'}`}>
           <div className="flex items-center gap-1.5 truncate">
             <span>{new Date(item.purchaseDate).toLocaleDateString()}</span>
             {expiryText && (
@@ -116,7 +119,7 @@ export default React.memo(function ItemCard({ item, index, isSelected, isSelecti
               </>
             )}
           </div>
-          <div className="flex items-center gap-1 text-primary bg-primary/10 font-medium shrink-0 px-1.5 py-0.5 rounded-md ml-2">
+          <div className={`flex items-center gap-1 font-medium shrink-0 px-1.5 py-0.5 rounded-md ml-2 ${isExpired ? 'bg-red-100 text-red-500' : 'text-primary bg-primary/10'}`}>
             <span>日均 ¥{dailyCost.toFixed(2)}</span>
           </div>
         </div>
@@ -128,7 +131,7 @@ export default React.memo(function ItemCard({ item, index, isSelected, isSelecti
               <span 
                 key={tag} 
                 onClick={(e) => onTagClick(tag, e)}
-                className="inline-flex items-center text-[9px] font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 px-1.5 py-0.5 rounded"
+                className={`inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded ${isExpired ? 'bg-red-100 text-red-600' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
               >
                 #{tag}
               </span>

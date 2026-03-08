@@ -7,7 +7,7 @@ import { customStringCompare } from '../utils/sort';
 
 interface ItemListProps {
   items: StockpileItem[];
-  onAdd: () => void;
+  onAdd: (category?: string) => void;
   onEdit: (item: StockpileItem) => void;
   onDelete: (ids: string[]) => void;
   onExport: (type: 'json' | 'excel') => void;
@@ -21,7 +21,7 @@ interface ItemListProps {
 const THEME_COLORS = [
   { name: 'Blue', value: '#007AFF' },
   { name: 'Green', value: '#10b981' },
-  { name: 'Purple', value: '#8b5cf6' },
+  { name: 'Black', value: '#111827' },
   { name: 'Orange', value: '#f97316' },
 ];
 
@@ -189,9 +189,9 @@ export default function ItemList({
   };
 
   return (
-    <div className="flex flex-col h-full bg-stone-100 relative pt-safe">
+    <div className="flex flex-col h-full bg-transparent relative pt-safe">
       {/* Top App Bar */}
-      <header className="bg-stone-100/80 backdrop-blur-md text-stone-900 px-4 py-4 sticky top-0 z-20 border-b border-stone-200/50 h-16 flex items-center pt-[env(safe-area-inset-top,20px)]">
+      <header className="bg-stone-50/80 backdrop-blur-md text-stone-900 px-4 py-4 sticky top-0 z-20 border-b border-stone-200/50 h-16 flex items-center pt-[env(safe-area-inset-top,20px)]">
         {isSelectionMode ? (
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
@@ -213,7 +213,7 @@ export default function ItemList({
                 </button>
               )}
               <div className="flex flex-col">
-                <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+                <h1 className="font-serif text-2xl font-bold tracking-tighter text-[var(--color-primary)]">{title}</h1>
                 {onBack && <span className="text-[11px] text-stone-500 font-medium mt-0.5">共 {items.length} 件</span>}
               </div>
             </div>
@@ -308,7 +308,7 @@ export default function ItemList({
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
                         >
                           <Upload size={18} className="text-stone-400" />
-                          导入 Excel/CSV
+                          导入完整备份 (JSON)
                         </button>
                         <button 
                           onClick={() => { onExport('json'); setShowSettings(false); }}
@@ -331,6 +331,63 @@ export default function ItemList({
                           <Sparkles size={18} className="text-stone-400" />
                           关于
                         </button>
+                        <button 
+                          onClick={() => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/*';
+                            input.onchange = (e) => {
+                              const file = (e.target as HTMLInputElement).files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  const img = new Image();
+                                  img.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    let width = img.width;
+                                    let height = img.height;
+                                    const maxDim = 1080;
+                                    if (width > maxDim || height > maxDim) {
+                                      if (width > height) {
+                                        height = (height * maxDim) / width;
+                                        width = maxDim;
+                                      } else {
+                                        width = (width * maxDim) / height;
+                                        height = maxDim;
+                                      }
+                                    }
+                                    canvas.width = width;
+                                    canvas.height = height;
+                                    const ctx = canvas.getContext('2d');
+                                    ctx?.drawImage(img, 0, 0, width, height);
+                                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                                    localStorage.setItem('app_custom_bg', compressedDataUrl);
+                                    window.dispatchEvent(new Event('storage'));
+                                  };
+                                  img.src = event.target?.result as string;
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            };
+                            input.click();
+                            setShowSettings(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
+                        >
+                          <ImageIcon size={18} className="text-stone-400" />
+                          自定义背景
+                        </button>
+                        <button 
+                          onClick={() => {
+                            localStorage.removeItem('app_custom_bg');
+                            window.dispatchEvent(new Event('storage'));
+                            setShowSettings(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-stone-100"
+                        >
+                          <Trash2 size={18} className="text-red-400" />
+                          清除背景
+                        </button>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -346,49 +403,49 @@ export default function ItemList({
         <div className="px-4 pt-3">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <Search size={18} className="text-[var(--color-primary)]" />
+              <Search size={18} className="text-stone-400" />
             </div>
             <input
               type="text"
-              placeholder=""
+              placeholder="检索你所拥有的..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 focus:ring-2 focus:ring-primary transition-all text-sm text-stone-800"
+              className="w-full pl-10 pr-4 py-3 bg-stone-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm text-stone-800 placeholder:text-stone-400"
             />
           </div>
         </div>
       )}
 
-      <main className={`flex-1 overflow-y-auto px-4 pt-2 space-y-4 ${hasBottomNav ? 'pb-32' : 'pb-24'}`}>
+      <main className={`flex-1 overflow-y-auto px-4 pt-2 space-y-4 ${hasBottomNav ? 'pb-36' : 'pb-24'} bg-transparent`}>
         {/* Dashboard Header Card (Slimmed Down) */}
         {!isSelectionMode && showDashboard && items.length > 0 && (
-          <div className="bg-primary/10 rounded-2xl p-4 shadow-sm border border-primary/20 flex flex-col gap-3">
+          <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
               {/* Left: Daily Cost */}
               <div className="flex-1">
-                <div className="flex items-center gap-1.5 text-primary mb-1">
+                <div className="flex items-center gap-1.5 text-[var(--color-primary)] mb-1">
                   <TrendingDown size={14} />
                   <h2 className="text-xs font-medium tracking-wide uppercase">总计日均消耗</h2>
                 </div>
-                <div className="flex items-baseline gap-1 text-primary">
+                <div className="flex items-baseline gap-1 text-stone-900">
                   <span className="text-base font-semibold">¥</span>
-                  <span className="text-2xl font-bold tracking-tight">{totalDailyCost.toFixed(2)}</span>
-                  <span className="text-primary/80 font-medium text-[10px] ml-1">/ 天</span>
+                  <span className="text-3xl font-bold tracking-tight">{totalDailyCost.toFixed(2)}</span>
+                  <span className="font-medium text-xs ml-1">/ 天</span>
                 </div>
               </div>
 
               {/* Right: Expiring Warning */}
               {expiringItemsCount > 0 && (
-                <div className="flex-1 flex flex-col items-end text-right border-l border-primary/20 pl-4">
-                  <div className="flex items-center gap-1 text-red-600 mb-1">
-                    <AlertCircle size={12} />
-                    <span className="text-xs font-medium">临期提醒</span>
+                <div className="flex-1 flex flex-col items-end text-right border-l border-stone-100 pl-4">
+                  <div className="flex items-center gap-1 text-red-500 mb-1 font-bold">
+                    <AlertCircle size={12} strokeWidth={3} />
+                    <span className="text-xs">临期提醒</span>
                   </div>
-                  <div className="flex items-baseline gap-1 text-red-700">
-                    <span className="text-xl font-bold">{expiringItemsCount}</span>
+                  <div className="flex items-baseline gap-1 text-stone-900">
+                    <span className="text-3xl font-bold">{expiringItemsCount}</span>
                     <span className="text-xs">件</span>
                   </div>
-                  <span className="text-[10px] text-red-600/80 mt-0.5">即将或已过期</span>
+                  <span className="text-[10px] text-stone-400 mt-0.5">即将或已过期</span>
                 </div>
               )}
             </div>
@@ -446,7 +503,7 @@ export default function ItemList({
       {/* Floating Action Button (FAB) */}
       {!isSelectionMode && (
         <button
-          onClick={onAdd}
+          onClick={() => onAdd(title !== 'Stockpile' ? title : undefined)}
           className={`absolute right-5 w-14 h-14 text-white rounded-2xl shadow-primary-fab hover:shadow-primary-fab-hover hover:-translate-y-1 transition-all flex items-center justify-center z-30 border border-white/20 ${hasBottomNav ? 'bottom-24' : 'bottom-6'}`}
           style={{ background: 'var(--color-primary)' }}
         >
