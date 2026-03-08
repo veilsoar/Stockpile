@@ -18,6 +18,13 @@ interface ItemListProps {
   hasBottomNav?: boolean;
 }
 
+const THEME_COLORS = [
+  { name: 'Blue', value: '#007AFF' },
+  { name: 'Green', value: '#10b981' },
+  { name: 'Purple', value: '#8b5cf6' },
+  { name: 'Orange', value: '#f97316' },
+];
+
 export default function ItemList({ 
   items, 
   onAdd, 
@@ -40,19 +47,18 @@ export default function ItemList({
   const [showSort, setShowSort] = useState(false);
   const [sortBy, setSortBy] = useState<'time' | 'category' | 'tag'>('time');
   const [showNearExpiry, setShowNearExpiry] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('isDarkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
 
   useEffect(() => {
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    const savedColor = localStorage.getItem('themeColor');
+    if (savedColor) {
+      document.documentElement.style.setProperty('--color-primary', savedColor);
     }
-  }, [isDarkMode]);
+  }, []);
+
+  const handleColorChange = (color: string) => {
+    document.documentElement.style.setProperty('--color-primary', color);
+    localStorage.setItem('themeColor', color);
+  };
 
   const settingsRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -185,9 +191,9 @@ export default function ItemList({
   return (
     <div className="flex flex-col h-full bg-stone-100 relative pt-safe">
       {/* Top App Bar */}
-      <header className="bg-stone-100/80 backdrop-blur-md text-stone-900 px-4 py-3 sticky top-0 z-20 border-b border-stone-200/50 pt-[env(safe-area-inset-top,20px)]">
+      <header className="bg-stone-100/80 backdrop-blur-md text-stone-900 px-4 py-4 sticky top-0 z-20 border-b border-stone-200/50 h-16 flex items-center pt-[env(safe-area-inset-top,20px)]">
         {isSelectionMode ? (
-          <div className="flex items-center justify-between h-10">
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
               <button onClick={cancelSelection} className="p-2 -ml-2 rounded-full hover:bg-stone-200">
                 <span className="text-xl">✕</span>
@@ -199,7 +205,7 @@ export default function ItemList({
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-between h-10 mb-2">
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               {onBack && (
                 <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-stone-200 transition-colors">
@@ -233,26 +239,26 @@ export default function ItemList({
                         <div className="px-4 py-2 text-xs font-semibold text-stone-400 uppercase tracking-wider">排序</div>
                         <button 
                           onClick={() => { setSortBy('time'); setShowSort(false); }}
-                          className={`w-full text-left px-4 py-3 text-sm transition-colors ${sortBy === 'time' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
+                          className={`w-full text-left px-4 py-3 text-sm transition-colors ${sortBy === 'time' ? 'bg-primary/10 text-primary font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
                         >
                           按时间排序
                         </button>
                         <button 
                           onClick={() => { setSortBy('category'); setShowSort(false); }}
-                          className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${sortBy === 'category' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
+                          className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${sortBy === 'category' ? 'bg-primary/10 text-primary font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
                         >
                           按分类排序
                         </button>
                         <button 
                           onClick={() => { setSortBy('tag'); setShowSort(false); }}
-                          className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${sortBy === 'tag' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
+                          className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${sortBy === 'tag' ? 'bg-primary/10 text-primary font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
                         >
                           按标签排序
                         </button>
                         <div className="px-4 py-2 text-xs font-semibold text-stone-400 uppercase tracking-wider border-t border-stone-100">筛选</div>
                         <button 
                           onClick={() => { setShowNearExpiry(!showNearExpiry); setShowSort(false); }}
-                          className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${showNearExpiry ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
+                          className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${showNearExpiry ? 'bg-primary/10 text-primary font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
                         >
                           {showNearExpiry ? '✓ 仅显示临期/过期' : '仅显示临期/过期'}
                         </button>
@@ -277,22 +283,25 @@ export default function ItemList({
                         initial={{ opacity: 0, scale: 0.95, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-stone-100 overflow-hidden z-30"
+                        className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-stone-100 overflow-hidden z-30"
                       >
-                        <button 
-                          onClick={() => setIsDarkMode(!isDarkMode)}
-                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
-                        >
-                          <span className="flex items-center gap-3">
-                            {isDarkMode ? '🌞 浅色模式' : '🌙 暗色模式'}
-                          </span>
-                        </button>
+                        <div className="px-4 py-2 text-xs font-semibold text-stone-400 uppercase tracking-wider">主题颜色</div>
+                        <div className="flex gap-2 px-4 py-2">
+                          {THEME_COLORS.map(color => (
+                            <button
+                              key={color.name}
+                              onClick={() => handleColorChange(color.value)}
+                              className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                              style={{ backgroundColor: color.value }}
+                            />
+                          ))}
+                        </div>
                         <button 
                           onClick={() => { setShowInfoDialog(true); setShowSettings(false); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
                         >
                           <Info size={18} className="text-stone-400" />
-                          搜索与排序说明
+                          说明
                         </button>
                         <button 
                           onClick={() => { onImport(); setShowSettings(false); }}
@@ -323,10 +332,12 @@ export default function ItemList({
             )}
           </div>
         )}
-
-        {/* Search Bar */}
-        {!isSelectionMode && (
-          <div className="mt-1 relative w-full">
+      </header>
+      
+      {/* Search Bar */}
+      {!isSelectionMode && (
+        <div className="px-4 pt-3">
+          <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <Search size={18} className="text-stone-400" />
             </div>
@@ -335,33 +346,33 @@ export default function ItemList({
               placeholder=""
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 focus:ring-2 focus:ring-emerald-500 transition-all text-sm text-stone-800"
+              className="w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/40 focus:ring-2 focus:ring-primary transition-all text-sm text-stone-800"
             />
           </div>
-        )}
-      </header>
+        </div>
+      )}
 
       <main className={`flex-1 overflow-y-auto px-4 pt-2 space-y-4 ${hasBottomNav ? 'pb-32' : 'pb-24'}`}>
         {/* Dashboard Header Card (Slimmed Down) */}
         {!isSelectionMode && showDashboard && items.length > 0 && (
-          <div className="bg-emerald-100/80 rounded-2xl p-4 shadow-sm border border-emerald-200/50 flex flex-col gap-3">
+          <div className="bg-primary/10 rounded-2xl p-4 shadow-sm border border-primary/20 flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
               {/* Left: Daily Cost */}
               <div className="flex-1">
-                <div className="flex items-center gap-1.5 text-emerald-800 mb-1">
+                <div className="flex items-center gap-1.5 text-primary mb-1">
                   <TrendingDown size={14} />
                   <h2 className="text-xs font-medium tracking-wide uppercase">总计日均消耗</h2>
                 </div>
-                <div className="flex items-baseline gap-1 text-emerald-950">
+                <div className="flex items-baseline gap-1 text-primary">
                   <span className="text-base font-semibold">¥</span>
                   <span className="text-2xl font-bold tracking-tight">{totalDailyCost.toFixed(2)}</span>
-                  <span className="text-emerald-800 font-medium text-[10px] ml-1">/ 天</span>
+                  <span className="text-primary/80 font-medium text-[10px] ml-1">/ 天</span>
                 </div>
               </div>
 
               {/* Right: Expiring Warning */}
               {expiringItemsCount > 0 && (
-                <div className="flex-1 flex flex-col items-end text-right border-l border-emerald-200/50 pl-4">
+                <div className="flex-1 flex flex-col items-end text-right border-l border-primary/20 pl-4">
                   <div className="flex items-center gap-1 text-red-600 mb-1">
                     <AlertCircle size={12} />
                     <span className="text-xs font-medium">临期提醒</span>
@@ -380,15 +391,15 @@ export default function ItemList({
         {/* Item List (Horizontal Layout) */}
         {items.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-stone-500 space-y-6 pt-12">
-            <div className={`w-40 h-40 ${isDarkMode ? 'bg-stone-800' : 'bg-emerald-50'} rounded-full flex items-center justify-center relative`}>
-              <div className={`absolute inset-0 ${isDarkMode ? 'bg-stone-700' : 'bg-emerald-100'} rounded-full animate-pulse opacity-50`}></div>
-              <ImageIcon size={48} className={`${isDarkMode ? 'text-stone-500' : 'text-emerald-400'} relative z-10`} />
-              <div className={`absolute -bottom-2 -right-2 ${isDarkMode ? 'bg-stone-900' : 'bg-white'} p-2 rounded-full shadow-sm`}>
-                <Plus size={20} className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-500'}`} />
+            <div className="w-40 h-40 bg-primary/5 rounded-full flex items-center justify-center relative">
+              <div className="absolute inset-0 bg-primary/10 rounded-full animate-pulse opacity-50"></div>
+              <ImageIcon size={48} className="text-primary relative z-10" />
+              <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-sm">
+                <Plus size={20} className="text-primary" />
               </div>
             </div>
             <div className="text-center space-y-2 max-w-[240px]">
-              <p className={`text-lg font-semibold ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>还没有囤货记录？</p>
+              <p className="text-lg font-semibold text-stone-800">还没有囤货记录？</p>
               <p className="text-xs text-stone-500 leading-relaxed">
                 点击右下角按钮，开启你的第一笔资产记录吧！
               </p>
@@ -409,7 +420,6 @@ export default function ItemList({
                   index={index}
                   isSelected={selectedIds.has(item.id)}
                   isSelectionMode={isSelectionMode}
-                  isDarkMode={isDarkMode}
                   onClick={() => {
                     if (isSelectionMode) {
                       toggleSelection(item.id);
@@ -430,8 +440,8 @@ export default function ItemList({
       {!isSelectionMode && (
         <button
           onClick={onAdd}
-          className={`absolute right-5 w-14 h-14 text-white rounded-2xl shadow-[0_8px_20px_rgba(0,156,97,0.4)] hover:shadow-[0_12px_24px_rgba(0,156,97,0.5)] hover:-translate-y-1 transition-all flex items-center justify-center z-30 border border-white/20 ${hasBottomNav ? 'bottom-24' : 'bottom-6'}`}
-          style={{ background: 'radial-gradient(circle at center, #00cb7d, #009c61)' }}
+          className={`absolute right-5 w-14 h-14 text-white rounded-2xl shadow-[0_8px_20px_rgba(0,122,255,0.4)] hover:shadow-[0_12px_24px_rgba(0,122,255,0.5)] hover:-translate-y-1 transition-all flex items-center justify-center z-30 border border-white/20 ${hasBottomNav ? 'bottom-24' : 'bottom-6'}`}
+          style={{ background: 'var(--color-primary)' }}
         >
           <Plus size={28} />
         </button>
@@ -448,7 +458,7 @@ export default function ItemList({
               className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-white/50"
             >
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <Info size={24} />
                 </div>
                 <h3 className="text-lg font-bold text-stone-800">说明</h3>
@@ -457,7 +467,7 @@ export default function ItemList({
               <div className="space-y-5 text-sm text-stone-600">
                 <div className="bg-stone-50/50 p-4 rounded-2xl border border-stone-100/50">
                   <h4 className="font-semibold text-stone-800 mb-2 flex items-center gap-2">
-                    <Search size={16} className="text-emerald-500" />
+                    <Search size={16} className="text-primary" />
                     搜索支持
                   </h4>
                   <p className="leading-relaxed">支持对物品的 <span className="font-medium text-stone-800">名称、购买平台、标签 (Tags) </span> 和 <span className="font-medium text-stone-800">备注</span> 进行多维度模糊搜索。</p>
@@ -465,7 +475,7 @@ export default function ItemList({
                 
                 <div className="bg-stone-50/50 p-4 rounded-2xl border border-stone-100/50">
                   <h4 className="font-semibold text-stone-800 mb-2 flex items-center gap-2">
-                    <ArrowUpDown size={16} className="text-emerald-500" />
+                    <ArrowUpDown size={16} className="text-primary" />
                     排序逻辑
                   </h4>
                   <p className="leading-relaxed">App 的自动排序优先级为：<br/><span className="font-medium text-stone-800">汉字（按拼音 A-Z） &gt; 数字 &gt; 字母</span>。</p>
@@ -494,7 +504,7 @@ export default function ItemList({
             >
               <div className="flex flex-col items-center mb-6">
                 <h2 className="text-3xl font-bold tracking-tight text-stone-800 mb-2 font-sans">Stockpile</h2>
-                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium tracking-wider">v1.1</span>
+                <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium tracking-wider">v1.1</span>
               </div>
               
               <div className="space-y-4 text-sm text-stone-600 leading-relaxed overflow-y-auto max-h-[60vh] px-1">

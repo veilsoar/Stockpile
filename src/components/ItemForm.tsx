@@ -83,7 +83,7 @@ export default function ItemForm({ initialItem, onSave, onCancel }: ItemFormProp
         <button
           onClick={handleSubmit}
           disabled={!name.trim()}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-colors"
         >
           <Save size={20} />
           <span>保存</span>

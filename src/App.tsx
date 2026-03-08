@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
 import { StockpileItem } from './types';
 import { getAllItems, saveItem, deleteItems, saveItems } from './store';
 import { exportToCSV, importFromCSV } from './utils/export';
@@ -19,7 +20,22 @@ export default function App() {
 
   useEffect(() => {
     loadItems();
-  }, []);
+
+    // Capacitor Hardware Back Button Listener
+    const backButtonListener = CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      if (currentView === 'form') {
+        setCurrentView('list');
+      } else if (selectedCategory) {
+        setSelectedCategory(null);
+      } else if (!canGoBack) {
+        CapacitorApp.exitApp();
+      }
+    });
+
+    return () => {
+      backButtonListener.then(listener => listener.remove());
+    };
+  }, [currentView, selectedCategory]);
 
   const loadItems = async () => {
     try {
@@ -107,7 +123,7 @@ export default function App() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-stone-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
@@ -204,18 +220,18 @@ export default function App() {
         <nav className="bg-white/90 backdrop-blur-md border-t border-stone-200/50 px-6 py-2 pb-safe flex justify-around items-center z-30 relative">
           <button 
             onClick={() => setTab('overview')} 
-            className={`flex flex-col items-center p-2 min-w-[64px] ${tab === 'overview' ? 'text-emerald-700' : 'text-stone-500 hover:text-stone-700'}`}
+            className={`flex flex-col items-center p-2 min-w-[64px] ${tab === 'overview' ? 'text-primary' : 'text-stone-500 hover:text-stone-700'}`}
           >
-            <div className={`px-5 py-1 rounded-full transition-colors ${tab === 'overview' ? 'bg-emerald-100' : ''}`}>
+            <div className={`px-5 py-1 rounded-full transition-colors ${tab === 'overview' ? 'bg-primary/10' : ''}`}>
               <LayoutDashboard size={24} strokeWidth={tab === 'overview' ? 2.5 : 2} />
             </div>
             <span className="text-[11px] font-medium mt-1">概览</span>
           </button>
           <button 
             onClick={() => setTab('categories')} 
-            className={`flex flex-col items-center p-2 min-w-[64px] ${tab === 'categories' ? 'text-emerald-700' : 'text-stone-500 hover:text-stone-700'}`}
+            className={`flex flex-col items-center p-2 min-w-[64px] ${tab === 'categories' ? 'text-primary' : 'text-stone-500 hover:text-stone-700'}`}
           >
-            <div className={`px-5 py-1 rounded-full transition-colors ${tab === 'categories' ? 'bg-emerald-100' : ''}`}>
+            <div className={`px-5 py-1 rounded-full transition-colors ${tab === 'categories' ? 'bg-primary/10' : ''}`}>
               <Layers size={24} strokeWidth={tab === 'categories' ? 2.5 : 2} />
             </div>
             <span className="text-[11px] font-medium mt-1">分类</span>

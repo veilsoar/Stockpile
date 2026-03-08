@@ -8,27 +8,6 @@ interface CategoryListProps {
   onSelectCategory: (category: string) => void;
 }
 
-const CategoryItem = React.memo(({ cat, onClick }: { cat: { name: string; count: number; total: number }; onClick: () => void }) => (
-  <div
-    onClick={onClick}
-    className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer flex items-center justify-between shrink-0"
-  >
-    <div className="flex items-center gap-4">
-      <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
-        <Layers size={24} />
-      </div>
-      <div>
-        <h3 className="text-sm font-semibold text-stone-800">{cat.name}</h3>
-        <p className="text-xs text-stone-500">{cat.count} 件物品</p>
-      </div>
-    </div>
-    <div className="flex items-center gap-3">
-      <span className="text-sm font-bold text-emerald-600">¥{cat.total.toFixed(2)}</span>
-      <ChevronRight size={20} className="text-stone-300" />
-    </div>
-  </div>
-));
-
 export default function CategoryList({ items, onSelectCategory }: CategoryListProps) {
   const categories = useMemo(() => {
     const map = new Map<string, { count: number; total: number }>();
@@ -59,14 +38,30 @@ export default function CategoryList({ items, onSelectCategory }: CategoryListPr
 
   return (
     <div className="flex flex-col h-full bg-stone-100 pt-safe">
-      <header className="bg-stone-100 text-stone-900 px-4 py-3 sticky top-0 z-10">
-        <div className="flex items-center h-10 mb-2">
-          <h1 className="text-xl font-semibold tracking-tight">分类</h1>
-        </div>
+      <header className="bg-stone-100/80 backdrop-blur-md text-stone-900 px-4 py-4 sticky top-0 z-10 h-16 flex items-center pt-[env(safe-area-inset-top,20px)] border-b border-stone-200/50">
+        <h1 className="text-xl font-semibold tracking-tight">分类</h1>
       </header>
       <main className="flex-1 overflow-y-auto px-4 pb-32 pt-2 space-y-3">
         {categories.map((cat) => (
-          <CategoryItem key={cat.name} cat={cat} onClick={() => onSelectCategory(cat.name)} />
+          <div
+            key={cat.name}
+            onClick={() => onSelectCategory(cat.name)}
+            className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-primary/20 hover:shadow-md transition-all cursor-pointer flex items-center justify-between shrink-0"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                <Layers size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-stone-800">{cat.name}</h3>
+                <p className="text-xs text-stone-500">{cat.count} 件物品</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-primary">¥{cat.total.toFixed(2)}</span>
+              <ChevronRight size={20} className="text-stone-300" />
+            </div>
+          </div>
         ))}
       </main>
     </div>
