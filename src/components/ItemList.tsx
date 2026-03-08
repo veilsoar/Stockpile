@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { StockpileItem } from '../types';
-import { Search, Plus, Download, Upload, Trash2, Edit3, Image as ImageIcon, TrendingDown, AlertCircle, ArrowLeft, Settings, ArrowUpDown, Layers, Info, Sparkles } from 'lucide-react';
+import { Search, Plus, Download, Upload, Trash2, Edit3, Image as ImageIcon, TrendingDown, AlertCircle, ArrowLeft, Settings, ArrowUpDown, Layers, Info, Sparkles, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ItemCard, { calculateDailyCost } from './ItemCard';
 import { customStringCompare } from '../utils/sort';
@@ -39,6 +39,21 @@ export default function ItemList({
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [sortBy, setSortBy] = useState<'time' | 'category' | 'tag'>('time');
+  const [showNearExpiry, setShowNearExpiry] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('isDarkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   const settingsRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
@@ -63,17 +78,34 @@ export default function ItemList({
   }, []);
 
   const filteredItems = useMemo(() => {
+    let result = items;
+    
+    // Filter by search query
     const query = debouncedQuery.toLowerCase();
-    if (!query) return items;
-    return items.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) ||
-        (item.category || '未分类').toLowerCase().includes(query) ||
-        item.tags?.some(tag => tag.toLowerCase().includes(query)) ||
-        (item.platform || '').toLowerCase().includes(query) ||
-        (item.notes || '').toLowerCase().includes(query)
-    );
-  }, [items, debouncedQuery]);
+    if (query) {
+      result = result.filter(
+        (item) =>
+          item.name.toLowerCase().includes(query) ||
+          (item.category || '未分类').toLowerCase().includes(query) ||
+          item.tags?.some(tag => tag.toLowerCase().includes(query)) ||
+          (item.platform || '').toLowerCase().includes(query) ||
+          (item.notes || '').toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by near expiry
+    if (showNearExpiry) {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      result = result.filter(item => {
+        if (!item.expiryDate) return false;
+        const daysUntil = Math.ceil((item.expiryDate - todayStart) / (1000 * 60 * 60 * 24));
+        return daysUntil <= 30;
+      });
+    }
+
+    return result;
+  }, [items, debouncedQuery, showNearExpiry]);
 
   const sortedItems = useMemo(() => {
     const sorted = [...filteredItems];
@@ -181,13 +213,13 @@ export default function ItemList({
             </div>
             {!onBack && (
               <div className="flex items-center gap-1">
-                {/* Sort Toggle */}
+                {/* Sort Toggle (Funnel Icon) */}
                 <div className="relative" ref={sortRef}>
                   <button 
                     onClick={() => setShowSort(!showSort)} 
                     className="p-2 rounded-full hover:bg-stone-200 text-stone-600 transition-colors"
                   >
-                    <ArrowUpDown size={20} />
+                    <Filter size={20} />
                   </button>
                   
                   <AnimatePresence>
@@ -196,8 +228,9 @@ export default function ItemList({
                         initial={{ opacity: 0, scale: 0.95, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        className="absolute right-0 mt-2 w-36 bg-white rounded-2xl shadow-lg border border-stone-100 overflow-hidden z-30"
+                        className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-lg border border-stone-100 overflow-hidden z-30"
                       >
+                        <div className="px-4 py-2 text-xs font-semibold text-stone-400 uppercase tracking-wider">排序</div>
                         <button 
                           onClick={() => { setSortBy('time'); setShowSort(false); }}
                           className={`w-full text-left px-4 py-3 text-sm transition-colors ${sortBy === 'time' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
@@ -215,6 +248,13 @@ export default function ItemList({
                           className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${sortBy === 'tag' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
                         >
                           按标签排序
+                        </button>
+                        <div className="px-4 py-2 text-xs font-semibold text-stone-400 uppercase tracking-wider border-t border-stone-100">筛选</div>
+                        <button 
+                          onClick={() => { setShowNearExpiry(!showNearExpiry); setShowSort(false); }}
+                          className={`w-full text-left px-4 py-3 text-sm transition-colors border-t border-stone-100 ${showNearExpiry ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-stone-700 hover:bg-stone-50'}`}
+                        >
+                          {showNearExpiry ? '✓ 仅显示临期/过期' : '仅显示临期/过期'}
                         </button>
                       </motion.div>
                     )}
@@ -240,8 +280,16 @@ export default function ItemList({
                         className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-stone-100 overflow-hidden z-30"
                       >
                         <button 
+                          onClick={() => setIsDarkMode(!isDarkMode)}
+                          className="w-full flex items-center justify-between px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                        >
+                          <span className="flex items-center gap-3">
+                            {isDarkMode ? '🌞 浅色模式' : '🌙 暗色模式'}
+                          </span>
+                        </button>
+                        <button 
                           onClick={() => { setShowInfoDialog(true); setShowSettings(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
                         >
                           <Info size={18} className="text-stone-400" />
                           搜索与排序说明
@@ -316,7 +364,7 @@ export default function ItemList({
                 <div className="flex-1 flex flex-col items-end text-right border-l border-emerald-200/50 pl-4">
                   <div className="flex items-center gap-1 text-red-600 mb-1">
                     <AlertCircle size={12} />
-                    <span className="text-xs font-medium">到期提醒</span>
+                    <span className="text-xs font-medium">临期提醒</span>
                   </div>
                   <div className="flex items-baseline gap-1 text-red-700">
                     <span className="text-xl font-bold">{expiringItemsCount}</span>
@@ -332,15 +380,15 @@ export default function ItemList({
         {/* Item List (Horizontal Layout) */}
         {items.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-stone-500 space-y-6 pt-12">
-            <div className="w-40 h-40 bg-emerald-50 rounded-full flex items-center justify-center relative">
-              <div className="absolute inset-0 bg-emerald-100 rounded-full animate-pulse opacity-50"></div>
-              <ImageIcon size={48} className="text-emerald-400 relative z-10" />
-              <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-sm">
-                <Plus size={20} className="text-emerald-500" />
+            <div className={`w-40 h-40 ${isDarkMode ? 'bg-stone-800' : 'bg-emerald-50'} rounded-full flex items-center justify-center relative`}>
+              <div className={`absolute inset-0 ${isDarkMode ? 'bg-stone-700' : 'bg-emerald-100'} rounded-full animate-pulse opacity-50`}></div>
+              <ImageIcon size={48} className={`${isDarkMode ? 'text-stone-500' : 'text-emerald-400'} relative z-10`} />
+              <div className={`absolute -bottom-2 -right-2 ${isDarkMode ? 'bg-stone-900' : 'bg-white'} p-2 rounded-full shadow-sm`}>
+                <Plus size={20} className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-500'}`} />
               </div>
             </div>
             <div className="text-center space-y-2 max-w-[240px]">
-              <p className="text-lg font-semibold text-stone-800">还没有囤货记录？</p>
+              <p className={`text-lg font-semibold ${isDarkMode ? 'text-stone-200' : 'text-stone-800'}`}>还没有囤货记录？</p>
               <p className="text-xs text-stone-500 leading-relaxed">
                 点击右下角按钮，开启你的第一笔资产记录吧！
               </p>
@@ -361,6 +409,7 @@ export default function ItemList({
                   index={index}
                   isSelected={selectedIds.has(item.id)}
                   isSelectionMode={isSelectionMode}
+                  isDarkMode={isDarkMode}
                   onClick={() => {
                     if (isSelectionMode) {
                       toggleSelection(item.id);
@@ -381,7 +430,8 @@ export default function ItemList({
       {!isSelectionMode && (
         <button
           onClick={onAdd}
-          className={`absolute right-5 w-14 h-14 bg-emerald-500 text-white rounded-2xl shadow-lg hover:bg-emerald-600 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center z-30 ${hasBottomNav ? 'bottom-24' : 'bottom-6'}`}
+          className={`absolute right-5 w-14 h-14 text-white rounded-2xl shadow-[0_8px_20px_rgba(0,156,97,0.4)] hover:shadow-[0_12px_24px_rgba(0,156,97,0.5)] hover:-translate-y-1 transition-all flex items-center justify-center z-30 border border-white/20 ${hasBottomNav ? 'bottom-24' : 'bottom-6'}`}
+          style={{ background: 'radial-gradient(circle at center, #00cb7d, #009c61)' }}
         >
           <Plus size={28} />
         </button>
@@ -401,14 +451,14 @@ export default function ItemList({
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
                   <Info size={24} />
                 </div>
-                <h3 className="text-lg font-bold text-stone-800">搜索与排序说明</h3>
+                <h3 className="text-lg font-bold text-stone-800">说明</h3>
               </div>
               
               <div className="space-y-5 text-sm text-stone-600">
                 <div className="bg-stone-50/50 p-4 rounded-2xl border border-stone-100/50">
                   <h4 className="font-semibold text-stone-800 mb-2 flex items-center gap-2">
                     <Search size={16} className="text-emerald-500" />
-                    全能搜索
+                    搜索支持
                   </h4>
                   <p className="leading-relaxed">支持对物品的 <span className="font-medium text-stone-800">名称、购买平台、标签 (Tags) </span> 和 <span className="font-medium text-stone-800">备注</span> 进行多维度模糊搜索。</p>
                 </div>
@@ -416,7 +466,7 @@ export default function ItemList({
                 <div className="bg-stone-50/50 p-4 rounded-2xl border border-stone-100/50">
                   <h4 className="font-semibold text-stone-800 mb-2 flex items-center gap-2">
                     <ArrowUpDown size={16} className="text-emerald-500" />
-                    智能排序逻辑
+                    排序逻辑
                   </h4>
                   <p className="leading-relaxed">App 的自动排序优先级为：<br/><span className="font-medium text-stone-800">汉字（按拼音 A-Z） &gt; 数字 &gt; 字母</span>。</p>
                 </div>
@@ -461,11 +511,11 @@ export default function ItemList({
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="shrink-0 mt-0.5">🏮</span>
-                      <span><strong className="text-stone-800">中文尊严：</strong> 坚持汉字排在数字和字母前面，因为开发者坚信“汉字才是最稳的”。</span>
+                      <span><strong className="text-stone-800">中文尊严：</strong> 坚持汉字排在数字和字母前面，因为我坚信“汉字才是最稳的”。</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="shrink-0 mt-0.5">🚀</span>
-                      <span><strong className="text-stone-800">丝滑飞行：</strong> 所有的卡片都用了物理弹簧动画，飞上来的时候如果没接住，概不负责。</span>
+                      <span><strong className="text-stone-800">丝滑飞行：</strong> 本功能为了功耗考虑，已下线。</span>
                     </li>
                   </ul>
                 </div>

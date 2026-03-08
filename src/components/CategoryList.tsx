@@ -1,13 +1,33 @@
 import React, { useMemo } from 'react';
 import { StockpileItem } from '../types';
 import { Layers, ChevronRight, PackageOpen } from 'lucide-react';
-import { motion } from 'motion/react';
 import { customStringCompare } from '../utils/sort';
 
 interface CategoryListProps {
   items: StockpileItem[];
   onSelectCategory: (category: string) => void;
 }
+
+const CategoryItem = React.memo(({ cat, onClick }: { cat: { name: string; count: number; total: number }; onClick: () => void }) => (
+  <div
+    onClick={onClick}
+    className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer flex items-center justify-between shrink-0"
+  >
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+        <Layers size={24} />
+      </div>
+      <div>
+        <h3 className="text-sm font-semibold text-stone-800">{cat.name}</h3>
+        <p className="text-xs text-stone-500">{cat.count} 件物品</p>
+      </div>
+    </div>
+    <div className="flex items-center gap-3">
+      <span className="text-sm font-bold text-emerald-600">¥{cat.total.toFixed(2)}</span>
+      <ChevronRight size={20} className="text-stone-300" />
+    </div>
+  </div>
+));
 
 export default function CategoryList({ items, onSelectCategory }: CategoryListProps) {
   const categories = useMemo(() => {
@@ -41,37 +61,12 @@ export default function CategoryList({ items, onSelectCategory }: CategoryListPr
     <div className="flex flex-col h-full bg-stone-100 pt-safe">
       <header className="bg-stone-100 text-stone-900 px-4 py-3 sticky top-0 z-10">
         <div className="flex items-center h-10 mb-2">
-          <h1 className="text-xl font-semibold tracking-tight">分类管理</h1>
+          <h1 className="text-xl font-semibold tracking-tight">分类</h1>
         </div>
       </header>
       <main className="flex-1 overflow-y-auto px-4 pb-32 pt-2 space-y-3">
-        {categories.map((cat, index) => (
-          <motion.div
-            initial={{ opacity: 0, y: 15, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ 
-              delay: index * 0.03,
-              duration: 0.25,
-              ease: [0.4, 0, 0.2, 1] // FastOutSlowInEasing
-            }}
-            key={cat.name}
-            onClick={() => onSelectCategory(cat.name)}
-            className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer flex items-center justify-between shrink-0"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
-                <Layers size={24} />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-stone-800">{cat.name}</h3>
-                <p className="text-xs text-stone-500">{cat.count} 件物品</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-emerald-600">¥{cat.total.toFixed(2)}</span>
-              <ChevronRight size={20} className="text-stone-300" />
-            </div>
-          </motion.div>
+        {categories.map((cat) => (
+          <CategoryItem key={cat.name} cat={cat} onClick={() => onSelectCategory(cat.name)} />
         ))}
       </main>
     </div>
