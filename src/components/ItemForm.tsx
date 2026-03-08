@@ -41,12 +41,42 @@ export default function ItemForm({ initialItem, onSave, onCancel }: ItemFormProp
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  const [isCompressing, setIsCompressing] = useState(false);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setIsCompressing(true);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUri(reader.result as string);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Resize logic
+          const maxDim = 800;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = (height * maxDim) / width;
+              width = maxDim;
+            } else {
+              width = (width * maxDim) / height;
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          setImageUri(compressedDataUrl);
+          setIsCompressing(false);
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -117,18 +147,20 @@ export default function ItemForm({ initialItem, onSave, onCancel }: ItemFormProp
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="flex items-center gap-2 px-6 py-3 bg-stone-200 text-stone-800 rounded-full font-medium hover:bg-stone-300 transition-colors"
+              disabled={isCompressing}
+              className="flex items-center gap-2 px-6 py-3 bg-stone-200 text-stone-800 rounded-full font-medium hover:bg-stone-300 transition-colors disabled:opacity-50"
             >
               <Camera size={20} />
-              <span>拍照</span>
+              <span>{isCompressing ? '处理中...' : '拍照'}</span>
             </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-6 py-3 bg-stone-200 text-stone-800 rounded-full font-medium hover:bg-stone-300 transition-colors"
+              disabled={isCompressing}
+              className="flex items-center gap-2 px-6 py-3 bg-stone-200 text-stone-800 rounded-full font-medium hover:bg-stone-300 transition-colors disabled:opacity-50"
             >
               <ImageIcon size={20} />
-              <span>相册</span>
+              <span>{isCompressing ? '处理中...' : '相册'}</span>
             </button>
             
             {/* Hidden inputs */}

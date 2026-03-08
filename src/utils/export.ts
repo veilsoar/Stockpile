@@ -1,34 +1,71 @@
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { StockpileItem } from '../types';
+import * as XLSX from 'xlsx';
 
-export function exportToCSV(items: StockpileItem[]) {
-  const headers = ['ID', '名称', '分类', '购买日期', '购买金额', '购买平台', '备注', '过期日期', '标签', '图片URI'];
-  
-  const rows = items.map(item => {
-    return [
-      `"${item.id}"`,
-      `"${(item.name || '').replace(/"/g, '""')}"`,
-      `"${(item.category || '').replace(/"/g, '""')}"`,
-      item.purchaseDate,
-      item.price,
-      `"${(item.platform || '').replace(/"/g, '""')}"`,
-      `"${(item.notes || '').replace(/"/g, '""')}"`,
-      item.expiryDate || '',
-      `"${(item.tags || []).join(';').replace(/"/g, '""')}"`,
-      `"${(item.imageUri || '').replace(/"/g, '""')}"`
-    ].join(',');
-  });
+export async function exportToJSON(items: StockpileItem[]) {
+  const fileName = `Stockpile_Full_Backup_${new Date().toISOString().split('T')[0]}_veilsoar.json`;
+  const jsonContent = JSON.stringify(items, null, 2);
 
-  const csvContent = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  try {
+    await Filesystem.writeFile({
+      path: fileName,
+      data: jsonContent,
+      directory: Directory.Cache,
+    });
+
+    const uri = await Filesystem.getUri({
+      path: fileName,
+      directory: Directory.Cache,
+    });
+
+    await Share.share({
+      title: '完整备份',
+      text: '这是您的全量囤货数据备份文件。',
+      url: uri.uri,
+      dialogTitle: '分享或保存备份',
+    });
+  } catch (error) {
+    console.error('JSON Export failed:', error);
+    alert('备份导出失败，请重试');
+  }
+}
+
+export async function exportToExcel(items: StockpileItem[]) {
+  const fileName = `Stockpile_List_${new Date().toISOString().split('T')[0]}_veilsoar.xlsx`;
   
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  link.setAttribute('href', url);
-  link.setAttribute('download', `stockpile_export_${new Date().getTime()}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  // Remove imageUri for Excel export to keep file size small
+  const excelData = items.map(({ imageUri, ...item }) => item);
+  
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Stockpile');
+  
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const base64Data = btoa(new Uint8Array(excelBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+
+  try {
+    await Filesystem.writeFile({
+      path: fileName,
+      data: base64Data,
+      directory: Directory.Cache,
+    });
+
+    const uri = await Filesystem.getUri({
+      path: fileName,
+      directory: Directory.Cache,
+    });
+
+    await Share.share({
+      title: '导出 Excel',
+      text: '这是您的囤货列表 Excel 文件。',
+      url: uri.uri,
+      dialogTitle: '分享或保存文件',
+    });
+  } catch (error) {
+    console.error('Excel Export failed:', error);
+    alert('Excel 导出失败，请重试');
+  }
 }
 
 export async function importFromCSV(file: File): Promise<StockpileItem[]> {

@@ -42,3 +42,11 @@ body {
   background: var(--color-primary);
   border-radius: 3px;
 }
+
+/* FAB Shadows */
+.shadow-primary-fab {
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-primary), transparent 60%);
+}
+.shadow-primary-fab-hover {
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--color-primary), transparent 50%);
+}

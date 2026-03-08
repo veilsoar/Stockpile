@@ -1,0 +1,61 @@
+name: Build Release APK
+on:
+  push:
+    tags:
+      - 'v*' # 核心魔法：只有当你推送以 v 开头的标签（如 v1.0, v2.1）时才触发
+  workflow_dispatch: # 保留这个，允许你在网页上手动一键强制打包
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '21'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Build Web
+      run: npm run build
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Build Release APK
+      working-directory: ./android
+      run: |
+        # 确保 gradlew 有执行权限
+        if [ -f "gradlew" ]; then
+          chmod +x gradlew
+          ./gradlew assembleRelease # 这里变成了 Release
+        else
+          echo "Error: gradlew not found in ./android"
+          exit 1
+        fi
+
+    - name: Sign Release APK
+      uses: r0adkll/sign-android-release@v1
+      id: sign_app
+      with:
+        releaseDirectory: android/app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+    - name: Upload Signed APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: stockpile-release-signed-apk
+        path: ${{steps.sign_app.outputs.signedReleaseFile}}

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { StockpileItem } from '../types';
-import { Search, Plus, Download, Upload, Trash2, Edit3, Image as ImageIcon, TrendingDown, AlertCircle, ArrowLeft, Settings, ArrowUpDown, Layers, Info, Sparkles, Filter } from 'lucide-react';
+import { Search, Plus, Download, Upload, Trash2, Edit3, Image as ImageIcon, TrendingDown, AlertCircle, ArrowLeft, Settings, ArrowUpDown, Layers, Info, Sparkles, Filter, FileJson } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ItemCard, { calculateDailyCost } from './ItemCard';
 import { customStringCompare } from '../utils/sort';
@@ -10,7 +10,7 @@ interface ItemListProps {
   onAdd: () => void;
   onEdit: (item: StockpileItem) => void;
   onDelete: (ids: string[]) => void;
-  onExport: () => void;
+  onExport: (type: 'json' | 'excel') => void;
   onImport: () => void;
   showDashboard?: boolean;
   title?: string;
@@ -311,11 +311,18 @@ export default function ItemList({
                           导入 Excel/CSV
                         </button>
                         <button 
-                          onClick={() => { onExport(); setShowSettings(false); }}
+                          onClick={() => { onExport('json'); setShowSettings(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
+                        >
+                          <FileJson size={18} className="text-stone-400" />
+                          导出完整备份 (JSON)
+                        </button>
+                        <button 
+                          onClick={() => { onExport('excel'); setShowSettings(false); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
                         >
                           <Download size={18} className="text-stone-400" />
-                          导出 Excel/CSV
+                          导出 Excel
                         </button>
                         <button 
                           onClick={() => { setShowAboutDialog(true); setShowSettings(false); }}
@@ -339,7 +346,7 @@ export default function ItemList({
         <div className="px-4 pt-3">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <Search size={18} className="text-stone-400" />
+              <Search size={18} className="text-[var(--color-primary)]" />
             </div>
             <input
               type="text"
@@ -440,7 +447,7 @@ export default function ItemList({
       {!isSelectionMode && (
         <button
           onClick={onAdd}
-          className={`absolute right-5 w-14 h-14 text-white rounded-2xl shadow-[0_8px_20px_rgba(0,122,255,0.4)] hover:shadow-[0_12px_24px_rgba(0,122,255,0.5)] hover:-translate-y-1 transition-all flex items-center justify-center z-30 border border-white/20 ${hasBottomNav ? 'bottom-24' : 'bottom-6'}`}
+          className={`absolute right-5 w-14 h-14 text-white rounded-2xl shadow-primary-fab hover:shadow-primary-fab-hover hover:-translate-y-1 transition-all flex items-center justify-center z-30 border border-white/20 ${hasBottomNav ? 'bottom-24' : 'bottom-6'}`}
           style={{ background: 'var(--color-primary)' }}
         >
           <Plus size={28} />

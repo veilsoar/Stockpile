@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { StockpileItem } from './types';
 import { getAllItems, saveItem, deleteItems, saveItems } from './store';
-import { exportToCSV, importFromCSV } from './utils/export';
+import { exportToJSON, exportToExcel, importFromCSV } from './utils/export';
 import ItemList from './components/ItemList';
 import ItemForm from './components/ItemForm';
 import CategoryList from './components/CategoryList';
@@ -86,12 +86,16 @@ export default function App() {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async (type: 'json' | 'excel') => {
     if (items.length === 0) {
       alert('没有可以导出的数据');
       return;
     }
-    exportToCSV(items);
+    if (type === 'json') {
+      await exportToJSON(items);
+    } else {
+      await exportToExcel(items);
+    }
   };
 
   const handleImportClick = () => {

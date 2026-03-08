@@ -41,13 +41,13 @@ export default React.memo(function ItemCard({ item, index, isSelected, isSelecti
       const daysUntil = Math.ceil((item.expiryDate - todayStart) / (1000 * 60 * 60 * 24));
       
       if (daysUntil < 0) {
-        bg = 'bg-red-50/70';
-        border = 'border-red-200/50';
-        text = <span className="text-red-600 font-medium text-[10px]">已过期 {Math.abs(daysUntil)} 天</span>;
+        bg = 'bg-red-200/70';
+        border = 'border-red-400/50';
+        text = <span className="text-red-900 font-medium text-[10px]">已过期 {Math.abs(daysUntil)} 天</span>;
       } else if (daysUntil === 0) {
-        bg = 'bg-red-50/70';
-        border = 'border-red-300/50';
-        text = <span className="text-red-600 font-bold text-[10px]">今天到期</span>;
+        bg = 'bg-red-200/70';
+        border = 'border-red-400/50';
+        text = <span className="text-red-900 font-bold text-[10px]">今天到期</span>;
       } else if (daysUntil <= 30) {
         bg = 'bg-orange-50/70';
         border = 'border-orange-200/50';
