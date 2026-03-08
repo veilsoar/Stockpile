@@ -20,10 +20,20 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            
+            // 正式版的名字，你可以根据需要修改
+            resValue "string", "app_name", "Stockpile"
         }
 
         debug {
-        applicationIdSuffix ".debug" 
+            // 核心：给包名加后缀，让它成为一个“新App”，实现共存
+            applicationIdSuffix ".debug"
+            
+            // 核心：修改测试版在桌面显示的名字，方便一眼区分
+            resValue "string", "app_name", "Stockpile_Debug"
+            
+            // 如果你想让测试版的图标也带个角标，通常需要更复杂的操作
+            // 但改名字是最快最直接的方式
         }
     }
 }

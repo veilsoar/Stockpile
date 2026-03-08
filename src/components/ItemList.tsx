@@ -212,9 +212,9 @@ export default function ItemList({
                   <ArrowLeft size={20} />
                 </button>
               )}
-              <div className="flex flex-col">
+              <div className="flex items-baseline gap-2">
                 <h1 className="font-serif text-2xl font-bold tracking-tighter text-[var(--color-primary)]">{title}</h1>
-                {onBack && <span className="text-[11px] text-stone-500 font-medium mt-0.5">共 {items.length} 件</span>}
+                {onBack && <span className="text-sm text-stone-500 font-medium">共 {items.length} 件</span>}
               </div>
             </div>
             {!onBack && (
@@ -568,12 +568,12 @@ export default function ItemList({
             >
               <div className="flex flex-col items-center mb-6">
                 <h2 className="text-3xl font-bold tracking-tight text-stone-800 mb-2 font-sans">Stockpile</h2>
-                <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium tracking-wider">v1.1</span>
+                <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium tracking-wider">v1.0</span>
               </div>
               
               <div className="space-y-4 text-sm text-stone-600 leading-relaxed overflow-y-auto max-h-[60vh] px-1">
                 <p>
-                  这是一个为了拯救“买时爽歪歪，找时抓脑袋”而诞生的 App。代码是由 Gemini 熬夜写的，Bug 是由veilsoar亲手调教的。
+                  这是一个为了拯救“买时爽歪歪，找时抓脑袋”而诞生的 App。代码是由veilsoar连夜拷打Gemini生出来的。
                 </p>
                 
                 <div className="space-y-3 mt-4">
@@ -589,7 +589,7 @@ export default function ItemList({
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="shrink-0 mt-0.5">🚀</span>
-                      <span><strong className="text-stone-800">丝滑飞行：</strong> 本功能为了功耗考虑，已下线。</span>
+                      <span><strong className="text-stone-800">丝滑起飞：</strong> 利用了已加载和压缩技术，让滑动浏览物品时丝滑得飞起。</span>
                     </li>
                   </ul>
                 </div>
@@ -597,7 +597,7 @@ export default function ItemList({
                 <div className="bg-stone-50/80 p-4 rounded-2xl border border-stone-100/50 mt-4">
                   <h4 className="font-bold text-stone-800 mb-1">温馨提示：</h4>
                   <p className="text-xs text-stone-500">
-                    1.1 版正式出道，虽然它现在还没法帮你自动补货，但它已经学会了帮你盯着钱包的每一个子儿。如果它偶尔闹小脾气（崩溃），请重启并给它一个爱的抱抱。
+                    1.0 版正式出道，虽然它现在还没法帮你自动补货，但它已经学会了帮你盯着钱包的每一个子儿。如果它偶尔闹小脾气（崩溃），请重启并给它一个爱的抱抱。
                   </p>
                 </div>
               </div>

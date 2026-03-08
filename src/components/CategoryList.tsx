@@ -54,7 +54,7 @@ export default function CategoryList({ items, onSelectCategory }: CategoryListPr
   return (
     <div className="flex flex-col h-full bg-transparent pt-safe">
       <header className="bg-transparent/80 backdrop-blur-md text-stone-900 px-4 py-4 sticky top-0 z-10 h-16 flex items-center pt-[env(safe-area-inset-top,20px)] border-b border-stone-200/50">
-        <h1 className="text-2xl font-bold font-serif tracking-tighter">分类</h1>
+        <h1 className="text-2xl font-bold font-serif tracking-tighter text-[var(--color-primary)]">分类</h1>
       </header>
       <main className="flex-1 overflow-y-auto px-4 pb-32 pt-2 space-y-3">
         {categories.map((cat) => {

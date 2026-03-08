@@ -6,3 +6,4 @@ coverage/
 *.log
 .env*
 !.env.example
+./开发debug和release版本手册.txt

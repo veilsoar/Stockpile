@@ -182,7 +182,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
-              className="absolute inset-0 z-20 bg-stone-100 flex flex-col"
+              className="absolute inset-0 z-20 bg-transparent flex flex-col"
             >
               <ItemForm
                 initialItem={editingItem}
@@ -198,7 +198,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="absolute inset-0 z-10 bg-stone-100 flex flex-col"
+              className="absolute inset-0 z-10 bg-transparent flex flex-col"
             >
               <ItemList
                 items={items}
@@ -218,7 +218,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="absolute inset-0 z-10 bg-stone-100 flex flex-col"
+              className="absolute inset-0 z-10 bg-transparent flex flex-col"
             >
               <ItemList
                 items={filteredCategoryItems}
@@ -240,7 +240,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="absolute inset-0 z-10 bg-stone-100 flex flex-col"
+              className="absolute inset-0 z-10 bg-transparent flex flex-col"
             >
               <CategoryList
                 items={items}
@@ -253,7 +253,7 @@ export default function App() {
 
       {/* Bottom Navigation */}
       {currentView === 'list' && !selectedCategory && (
-        <nav className="fixed bottom-6 left-0 right-0 w-max mx-auto bg-white/80 backdrop-blur-md border border-white/50 shadow-lg rounded-full px-10 py-3 flex gap-16 items-center z-50">
+        <nav className="fixed bottom-6 left-4 bg-white/80 backdrop-blur-md border border-white/50 shadow-lg rounded-full px-6 py-3 flex gap-8 items-center z-50">
           <button 
             onClick={() => setTab('overview')} 
             className={`transition-colors ${tab === 'overview' ? 'text-[var(--color-primary)]' : 'text-gray-400 hover:text-stone-600'}`}
