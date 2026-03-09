@@ -253,7 +253,7 @@ export default function App() {
 
       {/* Bottom Navigation */}
       {currentView === 'list' && !selectedCategory && (
-        <nav className="fixed bottom-6 left-4 bg-white/80 backdrop-blur-md border border-white/50 shadow-lg rounded-full px-6 py-3 flex gap-8 items-center z-50">
+        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md border border-white/50 shadow-lg rounded-full px-6 py-3 flex gap-8 items-center z-50">
           <button 
             onClick={() => setTab('overview')} 
             className={`transition-colors ${tab === 'overview' ? 'text-[var(--color-primary)]' : 'text-gray-400 hover:text-stone-600'}`}
